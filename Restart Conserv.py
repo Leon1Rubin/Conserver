@@ -1,37 +1,50 @@
 import paramiko
 import time
-import subprocess
+import socket
 
-def restart_vm(station, slot):
-    # VM details
-    ip_address = f"10.42.{station}.{slot}0"
-    username = "u"
-    password = "p"
+# Get user input for station and slot from the console
+rack = input("Enter the station number: ")
+cell = input("Enter the slot number: ")
 
+# VM details
+ip_address = f"10.42.{rack}.{cell}0"
+username = "U"
+password = "P"
+
+def is_vm_available(ip_address, port=22, timeout=3):
+    """Check if the VM is available by attempting a socket connection."""
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.settimeout(timeout)
+            s.connect((ip_address, port))
+            return True
+    except socket.error:
+        return False
+
+def restart_vm(ip_address, username, password):
     # SSH connection setup
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
     try:
         # Connect to VM
+        print(f"Connecting to {ip_address}...")
         ssh.connect(ip_address, username=username, password=password)
 
         # Issue reboot command
+        print(f"Issuing reboot command...")
         stdin, stdout, stderr = ssh.exec_command("sudo reboot")
 
-        print("Sleeping for 10 seconds...")
         # Wait for the VM to reboot (adjust the sleep time if needed)
-        time.sleep(10)
+        print(f"Sleeping for 45 seconds...")
+        time.sleep(45)
 
-        # Check VM availability with ping
-        print("Checking VM availability...")
-        ping_cmd = subprocess.Popen(['ping', '-c', '1', ip_address], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        ping_cmd.communicate()
-
-        if ping_cmd.returncode == 0:
+        # Check VM availability
+        print(f"Checking VM availability...")
+        if is_vm_available(ip_address):
             print(f"VM at {ip_address} successfully rebooted.")
         else:
-            print(f"Failed to ping {ip_address}. The VM may not have rebooted successfully.")
+            print(f"Failed to connect to {ip_address}. The VM may not have rebooted successfully.")
 
     except paramiko.AuthenticationException:
         print("Authentication failed. Please check your username and password.")
@@ -41,20 +54,12 @@ def restart_vm(station, slot):
         # Close SSH connection
         ssh.close()
 
-# Get user input for station and slot from the console
-station_input = input("Enter the station number: ")
-slot_input = input("Enter the slot number: ")
-
-# Convert user input to integers
-try:
-    station_value = int(station_input)
-    slot_value = int(slot_input)
-except ValueError:
-    print("Invalid input. Please enter valid integers for station and slot.")
-    exit()
-
 # Call the function with user input values
+if is_vm_available(ip_address, port=22, timeout=3):
+    print(f"VM at {ip_address} is available.")
+else:
+    print(f"VM at {ip_address} is not available. Restarting...")
 
-print(f"Restarting VM at 10.42.{station_value}.{slot_value}0...")
-restart_vm(station_value, slot_value)
+print(f"Restarting VM at 10.42.{rack}.{cell}0...")
+restart_vm(ip_address, username, password)
 print("Restart complete.")
