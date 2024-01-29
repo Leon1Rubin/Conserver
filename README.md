@@ -1,32 +1,62 @@
-# VM Restart Script
+# Restart_Conserv.py
 
-## Introduction
-This script is designed to restart virtual machines remotely. 
-It uses SSH for connection and allows specifying the VM's rack, cell, username, and password as command-line arguments.
+## Overview
+The `Restart_Conserv.py` script is a Python utility for remotely restarting virtual machines (VMs) over SSH. It is designed to be used in situations where you need to automate the process of restarting VMs in a specific network configuration.
 
-## Requirements
--   Python 3.x
--   Paramiko library
+## Table of Contents
+- [Prerequisites](#prerequisites)
+- [Usage](#usage)
+- [Functions](#functions)
+  - [is_vm_available](#is_vm_available)
+  - [get_system_uptime](#get_system_uptime)
+  - [validate_uptime](#validate_uptime)
+  - [restart_vm](#restart_vm)
+- [Main Function](#main-function)
+- [Example](#example)
+- [License](#license)
 
-## Installation
-1.  Ensure Python 3.x is installed on your system.
-2.  Install Paramiko using pip: `pip install paramiko`
+## Prerequisites
+Before using this script, ensure you have the following prerequisites in place:
+- Python 3.x installed
+- The `paramiko` library for SSH connections. You can install it using `pip`:
+pip install paramiko
+
+- Access to the VMs over SSH with appropriate credentials.
 
 ## Usage
-Run the script from the command line, providing the necessary arguments:
+To use the script, run it from the command line with the following arguments:
 
-`python Restart_Conserv.py <rack> <cell> <username> <password>` 
+python Restart_Conserv.py <rack> <cell> <username> <password>
 
-### Arguments
--   `rack`: The rack number of the VM.
--   `cell`: The cell number of the VM.
--   `username`: SSH username for the VM.
--   `password`: SSH password for the VM.
+- `<rack>`: The station number.
+- `<cell>`: The slot number.
+- `<username>`: The SSH username for VM access.
+- `<password>`: The SSH password for VM access.
 
-### Example
-To restart a VM located at rack 1, cell 2, with username 'admin' and password 'admin123', use:
-`python Restart_Conserv.py 1 2 admin admin123` 
+## Functions
+The script includes several functions to manage the VMs:
 
-## Help
-For a list of all available arguments, use the `-h` or `--help` flag:
-`python Restart_Conserv.py --help`
+### is_vm_available
+This function checks if a VM is reachable over the network by attempting to create a socket connection to it.
+
+### get_system_uptime
+This function runs the 'uptime' command on the VM and returns its output.
+
+### validate_uptime
+This function uses regular expressions to check if the VM's uptime indicates it was recently rebooted.
+
+### restart_vm
+This function restarts a VM by issuing a 'sudo reboot' command over SSH. It also handles the reconnection to the VM after the reboot.
+
+## Main Function
+The `main` function is the entry point of the script. It parses command-line arguments and initiates the VM restart process.
+
+## Example
+Here is an example of how to use the script:
+
+`python Restart_Conserv.py (rack) (cell) (username) (password)`
+
+This command will restart the VM located at IP address 10.42.(rack).(cell)0 with the provided username and password.
+
+## License
+This script is provided under the MIT License.
