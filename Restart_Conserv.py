@@ -4,7 +4,7 @@ import socket    # Import the socket library for socket operations
 import argparse  # Import the argparse library for parsing command-line arguments
 
 # Define a function to check VM availability
-def is_vm_available(ip_address, port=22, timeout=3):
+def is_vm_available(ip_address: str, port: int = 22, timeout: int = 3) -> bool:
     """Check if the VM is available by attempting a socket connection."""
     try:
         # Create a TCP socket
@@ -16,7 +16,7 @@ def is_vm_available(ip_address, port=22, timeout=3):
         return False  # Return False if there is a socket error (VM is not available)
 
 # Define a function to restart a VM
-def restart_vm(ip_address, username, password):
+def restart_vm(ip_address: str, username: str, password: str) -> None:
     ssh = paramiko.SSHClient()  # Create an SSH client instance
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())  # Set policy to automatically add the host key
 
@@ -30,8 +30,8 @@ def restart_vm(ip_address, username, password):
         stdin, stdout, stderr = ssh.exec_command("sudo reboot")
 
         # Wait for the VM to reboot
-        print(f"Sleeping for 45 seconds...")
-        time.sleep(45)
+        print(f"Sleeping for 60 seconds...")
+        time.sleep(60)
 
         # Check if the VM is available after reboot
         print(f"Checking VM availability...")
@@ -41,7 +41,7 @@ def restart_vm(ip_address, username, password):
             print(f"Failed to connect to {ip_address}. The VM may not have rebooted successfully.")
 
     except paramiko.AuthenticationException:
-        print("Authentication failed. Please check your username and password.")  # Handle authentication errors
+        raise Exception("Authentication failed. Check your username and password.")  # Handle authentication errors
     except paramiko.SSHException as e:
         print(f"Unable to establish SSH connection: {e}")  # Handle other SSH connection errors
     finally:
