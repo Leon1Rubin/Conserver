@@ -1,62 +1,33 @@
-# Restart_Conserv.py
+# VM Restart Script
+## Overview 
+This script provides an automated way to restart a virtual machine (VM) using SSH. 
+It checks the VM's availability, restarts it, and verifies the reboot by checking the system's uptime. 
+## Features  
+-  **VM Availability Check**: Determines if the VM is reachable over the network before attempting a restart. 
+-  **Automated VM Restart**: Restarts the VM using SSH commands. 
+-  **Uptime Validation**: Validates the VM's reboot by checking its uptime. 
+-  **Logging**: Detailed logging for each step of the process for better tracking and debugging. 
+-  **Modular Design**: Code is structured into functions for better readability and maintenance. 
 
-## Overview
-The `Restart_Conserv.py` script is a Python utility for remotely restarting virtual machines (VMs) over SSH. It is designed to be used in situations where you need to automate the process of restarting VMs in a specific network configuration.
+## Requirements  
+- Python 3.x - Paramiko library for SSH connections 
+- A VM that is accessible over the network 
+## Installation  
+1. Ensure Python 3.x is installed on your system. 
+2. 2. Install Paramiko using pip: `pip install paramiko`
+## Usage 
+Run the script from the command line with the required arguments:
+`python restart_vm.py [rack] [cell] [username] [password]`
 
-## Table of Contents
-- [Prerequisites](#prerequisites)
-- [Usage](#usage)
-- [Functions](#functions)
-  - [is_vm_available](#is_vm_available)
-  - [get_system_uptime](#get_system_uptime)
-  - [validate_uptime](#validate_uptime)
-  - [restart_vm](#restart_vm)
-- [Main Function](#main-function)
-- [Example](#example)
-- [License](#license)
-
-## Prerequisites
-Before using this script, ensure you have the following prerequisites in place:
-- Python 3.x installed
-- The `paramiko` library for SSH connections. You can install it using `pip`:
-pip install paramiko
-
-- Access to the VMs over SSH with appropriate credentials.
-
-## Usage
-To use the script, run it from the command line with the following arguments:
-
-python Restart_Conserv.py <rack> <cell> <username> <password>
-
-- `<rack>`: The station number.
-- `<cell>`: The slot number.
-- `<username>`: The SSH username for VM access.
-- `<password>`: The SSH password for VM access.
-
-## Functions
-The script includes several functions to manage the VMs:
-
-### is_vm_available
-This function checks if a VM is reachable over the network by attempting to create a socket connection to it.
-
-### get_system_uptime
-This function runs the 'uptime' command on the VM and returns its output.
-
-### validate_uptime
-This function uses regular expressions to check if the VM's uptime indicates it was recently rebooted.
-
-### restart_vm
-This function restarts a VM by issuing a 'sudo reboot' command over SSH. It also handles the reconnection to the VM after the reboot.
-
-## Main Function
-The `main` function is the entry point of the script. It parses command-line arguments and initiates the VM restart process.
-
-## Example
-Here is an example of how to use the script:
-
-`python Restart_Conserv.py (rack) (cell) (username) (password)`
-
-This command will restart the VM located at IP address 10.42.(rack).(cell)0 with the provided username and password.
-
-## License
-This script is provided under the MIT License.
+Replace `[rack]`, `[cell]`, `[username]`, and `[password]` with appropriate values for your VM. 
+## Functions  
+-  `is_vm_available`: Checks if the VM is available over the network. 
+-  `validate_uptime`: Validates if the VM's uptime indicates a recent reboot. 
+-  `create_ssh_client`: Creates a new SSH client. 
+-  `establish_ssh_connection`: Establishes an SSH connection with the VM. 
+-  `execute_ssh_command`: Executes a command on the VM via SSH. 
+-  `reboot_vm`: Sends a reboot command to the VM. 
+-  `reconnect_to_vm`: Attempts to reconnect to the VM after a reboot.
+-  `main_argument_parser`: Parses command-line arguments. 
+-  `main_logic`: Encapsulates the main logic for restarting the VM. 
+-  `main`: Entry point of the script. ## License Specify your license here. 
