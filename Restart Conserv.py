@@ -1,15 +1,7 @@
 import paramiko
 import time
 import socket
-
-# Get user input for station and slot from the console
-rack = input("Enter the station number: ")
-cell = input("Enter the slot number: ")
-
-# VM details
-ip_address = f"10.42.{rack}.{cell}0"
-username = "U"
-password = "P"
+import argparse
 
 def is_vm_available(ip_address, port=22, timeout=3):
     """Check if the VM is available by attempting a socket connection."""
@@ -54,12 +46,25 @@ def restart_vm(ip_address, username, password):
         # Close SSH connection
         ssh.close()
 
-# Call the function with user input values
-if is_vm_available(ip_address, port=22, timeout=3):
+# Setting up argument parser
+parser = argparse.ArgumentParser(description='Restart a VM.')
+parser.add_argument('rack', type=int, help='The station number')
+parser.add_argument('cell', type=int, help='The slot number')
+parser.add_argument('username', type=str, help='Username for VM SSH')
+parser.add_argument('password', type=str, help='Password for VM SSH')
+
+# Parsing arguments
+args = parser.parse_args()
+
+# VM details
+ip_address = f"10.42.{args.rack}.{args.cell}0"
+
+# Check VM availability and restart if needed
+if is_vm_available(ip_address):
     print(f"VM at {ip_address} is available.")
 else:
     print(f"VM at {ip_address} is not available. Restarting...")
 
-print(f"Restarting VM at 10.42.{rack}.{cell}0...")
-restart_vm(ip_address, username, password)
+print(f"Restarting VM at {ip_address}...")
+restart_vm(ip_address, args.username, args.password)
 print("Restart complete.")
