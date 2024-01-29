@@ -1,77 +1,106 @@
-import paramiko  # Import the Paramiko library for SSH connections
-import time      # Import the time library for sleep functionality
-import socket    # Import the socket library for socket operations
-import argparse  # Import the argparse library for parsing command-line arguments
+# Import necessary libraries
+import paramiko  # SSH connection functionality
+import time      # Time-related functions, such as sleep
+import socket    # Network connection functionality
+import argparse  # Command-line argument parsing
+import re        # Regular expressions for pattern matching in strings
 
-# Define a function to check VM availability
+# Function to check if a VM is reachable over the network
 def is_vm_available(ip_address: str, port: int = 22, timeout: int = 3) -> bool:
-    """Check if the VM is available by attempting a socket connection."""
+    """Attempts to create a socket connection to check if a VM is available."""
     try:
-        # Create a TCP socket
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.settimeout(timeout)  # Set a timeout for the socket connection
-            s.connect((ip_address, port))  # Try to connect to the given IP and port
-            return True  # Return True if the connection is successful
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:  # Open a TCP socket
+            s.settimeout(timeout)  # Set a timeout for the socket operation
+            s.connect((ip_address, port))  # Try connecting to the IP address and port
+            return True  # Return True if connection is successful
     except socket.error:
-        return False  # Return False if there is a socket error (VM is not available)
+        return False  # Return False if there's an error (VM not available)
 
-# Define a function to restart a VM
-def restart_vm(ip_address: str, username: str, password: str) -> None:
-    ssh = paramiko.SSHClient()  # Create an SSH client instance
-    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())  # Set policy to automatically add the host key
+# Function to get the system's uptime via SSH
+def get_system_uptime(ssh: paramiko.SSHClient) -> str:
+    """Runs the 'uptime' command on the VM and returns its output."""
+    stdin, stdout, stderr = ssh.exec_command("uptime")  # Execute the uptime command
+    return stdout.read().decode().strip()  # Decode and strip the output, then return it
+
+# Function to validate if the uptime indicates a recent reboot
+def validate_uptime(uptime_str: str) -> bool:
+    """Uses regex to check if the VM's uptime indicates it was recently rebooted."""
+    match = re.search(r"up\s+(\d+)\s+min", uptime_str)  # Look for the 'up X min' pattern
+    if match:
+        uptime_minutes = int(match.group(1))  # Extract the number of minutes
+        return uptime_minutes < 5  # True if uptime is less than 5 minutes, indicating a recent reboot
+    return False  # False if uptime doesn't indicate a recent reboot
+
+# Function to restart a VM
+def restart_vm(ip_address, username, password):
+    ssh = paramiko.SSHClient()  # Create a new SSH client
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())  # Set policy to add new host keys
 
     try:
-        # Attempt to establish an SSH connection
-        print(f"Connecting to {ip_address}...")
-        ssh.connect(ip_address, username=username, password=password)  # Connect using the provided credentials
+        print(f"Connecting to {ip_address}...")  # Indicate start of connection
+        ssh.connect(ip_address, username=username, password=password)  # Connect to VM
 
-        # Send a command to reboot the VM
-        print(f"Issuing reboot command...")
-        stdin, stdout, stderr = ssh.exec_command("sudo reboot")
+        print(f"Issuing reboot command...")  # Indicate reboot command being sent
+        stdin, stdout, stderr = ssh.exec_command("sudo reboot")  # Send reboot command
+        ssh.close()  # Close SSH session as reboot will disconnect it
 
-        # Wait for the VM to reboot
-        print(f"Sleeping for 60 seconds...")
-        time.sleep(60)
+        print(f"Sleeping for 55 seconds...")  # Wait for the VM to reboot
+        time.sleep(55)  # Sleep for 55 seconds
 
-        # Check if the VM is available after reboot
-        print(f"Checking VM availability...")
-        if is_vm_available(ip_address):
-            print(f"VM at {ip_address} successfully rebooted.")
+        # Reconnect to VM after reboot
+        reconnect_attempts = 0  # Counter for reconnect attempts
+        while reconnect_attempts < 5:  # Attempt to reconnect up to 5 times
+            try:
+                ssh.connect(ip_address, username=username, password=password)  # Try reconnecting
+                print(f"Reconnected to {ip_address}.")  # Indicate successful reconnection
+                break  # Exit loop on successful reconnection
+            except paramiko.SSHException:
+                reconnect_attempts += 1  # Increment attempt counter
+                print(f"Reconnect attempt {reconnect_attempts} failed, trying again in 30 seconds...")
+                time.sleep(30)  # Wait 30 seconds before trying again
+
+        if reconnect_attempts == 5:  # If 5 attempts failed
+            print("Failed to reconnect after 5 attempts.")  # Indicate failure to reconnect
+            return  # Exit function
+
+        # Check system uptime
+        uptime = get_system_uptime(ssh)  # Get system uptime
+        print(f"System uptime: {uptime}")  # Print uptime
+
+        # Validate uptime
+        if validate_uptime(uptime):  # Check if uptime indicates a recent reboot
+            print("Validation successful: The system has been recently rebooted.")
         else:
-            print(f"Failed to connect to {ip_address}. The VM may not have rebooted successfully.")
+            print("Validation failed: The system may not have been rebooted recently.")
 
-    except paramiko.AuthenticationException:
-        raise Exception("Authentication failed. Check your username and password.")  # Handle authentication errors
-    except paramiko.SSHException as e:
-        print(f"Unable to establish SSH connection: {e}")  # Handle other SSH connection errors
+    except paramiko.AuthenticationException:  # Catch authentication errors
+        print("Authentication failed. Please check your username and password.")
+    except paramiko.SSHException as e:  # Catch SSH connection errors
+        print(f"Unable to establish SSH connection: {e}")
     finally:
-        ssh.close()  # Ensure the SSH connection is closed
+        ssh.close()  # Ensure SSH connection is always closed
 
+# Main function to parse arguments and initiate VM restart
 def main():
-    # Set up the argument parser
-    parser = argparse.ArgumentParser(description='Restart a VM.')
-    # Define required command-line arguments
-    parser.add_argument('rack', type=int, help='The station number')
-    parser.add_argument('cell', type=int, help='The slot number')
-    parser.add_argument('username', type=str, help='Username for VM SSH')
-    parser.add_argument('password', type=str, help='Password for VM SSH')
+    parser = argparse.ArgumentParser(description='Restart a VM.')  # Set up argument parser
+    parser.add_argument('rack', type=int, help='The station number')  # Define rack argument
+    parser.add_argument('cell', type=int, help='The slot number')  # Define cell argument
+    parser.add_argument('username', type=str, help='Username for VM SSH')  # Define username argument
+    parser.add_argument('password', type=str, help='Password for VM SSH')  # Define password argument
 
-    # Parse the command-line arguments
-    args = parser.parse_args()
+    args = parser.parse_args()  # Parse arguments
 
-    # Construct the VM's IP address from the provided rack and cell values
-    ip_address = f"10.42.{args.rack}.{args.cell}0"
+    ip_address = f"10.42.{args.rack}.{args.cell}0"  # Construct the VM's IP address
 
-    # Check if the VM is available
-    if is_vm_available(ip_address):
+    if is_vm_available(ip_address):  # Check if VM is available before restarting
         print(f"VM at {ip_address} is available.")
     else:
         print(f"VM at {ip_address} is not available. Restarting...")
 
-    # Restart the VM
-    print(f"Restarting VM at {ip_address}...")
-    restart_vm(ip_address, args.username, args.password)
-    print("Restart complete.")  # Print a completion message
+    print(f"Restarting VM at {ip_address}...")  # Indicate VM restart
+    restart_vm(ip_address, args.username, args.password)  # Restart VM
+    print("Restart complete.")  # Indicate completion of restart
 
+# Check if script is being run directly and not imported
 if __name__ == "__main__":
-    main()
+    main()  # Execute main function if script is run directly
