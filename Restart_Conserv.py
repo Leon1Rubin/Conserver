@@ -47,27 +47,31 @@ def restart_vm(ip_address, username, password):
     finally:
         ssh.close()  # Ensure the SSH connection is closed
 
-# Set up the argument parser
-parser = argparse.ArgumentParser(description='Restart a VM.')
-# Define required command-line arguments
-parser.add_argument('rack', type=int, help='The station number')
-parser.add_argument('cell', type=int, help='The slot number')
-parser.add_argument('username', type=str, help='Username for VM SSH')
-parser.add_argument('password', type=str, help='Password for VM SSH')
+def main():
+    # Set up the argument parser
+    parser = argparse.ArgumentParser(description='Restart a VM.')
+    # Define required command-line arguments
+    parser.add_argument('rack', type=int, help='The station number')
+    parser.add_argument('cell', type=int, help='The slot number')
+    parser.add_argument('username', type=str, help='Username for VM SSH')
+    parser.add_argument('password', type=str, help='Password for VM SSH')
 
-# Parse the command-line arguments
-args = parser.parse_args()
+    # Parse the command-line arguments
+    args = parser.parse_args()
 
-# Construct the VM's IP address from the provided rack and cell values
-ip_address = f"10.42.{args.rack}.{args.cell}0"
+    # Construct the VM's IP address from the provided rack and cell values
+    ip_address = f"10.42.{args.rack}.{args.cell}0"
 
-# Check if the VM is available
-if is_vm_available(ip_address):
-    print(f"VM at {ip_address} is available.")
-else:
-    print(f"VM at {ip_address} is not available. Restarting...")
+    # Check if the VM is available
+    if is_vm_available(ip_address):
+        print(f"VM at {ip_address} is available.")
+    else:
+        print(f"VM at {ip_address} is not available. Restarting...")
 
-# Restart the VM
-print(f"Restarting VM at {ip_address}...")
-restart_vm(ip_address, args.username, args.password)
-print("Restart complete.")  # Print a completion message
+    # Restart the VM
+    print(f"Restarting VM at {ip_address}...")
+    restart_vm(ip_address, args.username, args.password)
+    print("Restart complete.")  # Print a completion message
+
+if __name__ == "__main__":
+    main()
