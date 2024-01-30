@@ -97,9 +97,9 @@ def main_logic(args):
             uptime = execute_ssh_command(ssh, "uptime")  # Get system uptime
             logging.info(f"System uptime: {uptime}")
             if validate_uptime(uptime):  # Validate if the reboot was successful
-                logging.info("Validation successful: The system has been recently rebooted.")
+                logging.info("Validation successful: The system has been recently rebooted ✅")
             else:
-                logging.warning("Validation failed: The system may not have been rebooted recently.")
+                logging.warning("Validation failed: The system may not have been rebooted recently ❌")
             ssh.close()  # Close the SSH connection
 
 def main():
