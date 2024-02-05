@@ -1,3 +1,6 @@
+<details>
+
+<summary>VM Restart Script</summary>
 # VM Restart Script
 ## Overview 
 This script provides an automated way to restart a virtual machine (VM) using SSH. 
@@ -31,3 +34,5 @@ Replace `[rack]`, `[cell]`, `[username]`, and `[password]` with appropriate valu
 -  `main_argument_parser`: Parses command-line arguments. 
 -  `main_logic`: Encapsulates the main logic for restarting the VM. 
 -  `main`: Entry point of the script. ## License Specify your license here. 
+
+</details>
