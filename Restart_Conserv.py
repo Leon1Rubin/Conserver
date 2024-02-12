@@ -6,7 +6,7 @@ import re        # Import re module for regular expression operations
 import logging   # Import logging module for logging information and errors
 
 # Configure the logging system to display information level logs and their messages
-logging.basicConfig(level=logging.INFO, format='%(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format='%(message)s')
 
 def is_vm_available(ip_address: str, port: int = 22, timeout: int = 3) -> bool:
     """Check if a VM is reachable over the network."""
